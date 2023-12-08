@@ -2,6 +2,15 @@
 
 namespace ShareMate.Models
 {
+
+    public enum MaterialType
+    {
+        Slides = 0, 
+        Notes = 1, 
+        Practice = 2,
+        PastExam = 3,
+        Video = 4,  
+    }
     public class Material
     {
         [Key]

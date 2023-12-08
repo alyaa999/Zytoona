@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShareMate.DbContext;
 
@@ -11,9 +12,10 @@ using ShareMate.DbContext;
 namespace ShareMate.Migrations
 {
     [DbContext(typeof(DbContextApplication))]
-    partial class DbContextApplicationModelSnapshot : ModelSnapshot
+    [Migration("20231208192716_addleveltoCourseTable")]
+    partial class addleveltoCourseTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

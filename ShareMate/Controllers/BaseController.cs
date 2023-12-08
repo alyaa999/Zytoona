@@ -11,7 +11,7 @@ namespace ShareMate.Controllers
 
         public BaseController()
         {
-            this.DefaultUserId = "11111111";
+            this.DefaultUserId = "bf092286-cee1-467c-aaf2-9cbe55235dd3";
         }
     }
 }

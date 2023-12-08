@@ -5,7 +5,9 @@ namespace ShareMate.Models
     public class Student 
     {
         [Key]
-        public int Id { get; set; }     
+        public int Id { get; set; }  
+
+        public string UserId { get; set; }     
          public User User { get; set; }     
 
         public List<Material> Materials { get; set; }
