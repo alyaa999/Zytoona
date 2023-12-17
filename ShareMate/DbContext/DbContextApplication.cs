@@ -23,6 +23,12 @@ namespace ShareMate.DbContext
             
             base.OnModelCreating(modelBuilder);
         }
+
+        // Define a method for the stored procedure
+        public IEnumerable<Course> SearchCourses(string searchTerm)
+        {
+            return Courses.FromSqlRaw("EXEC SearchCourses @p0", searchTerm).ToList();
+        }
     }
 
 

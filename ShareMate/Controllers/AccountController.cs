@@ -1,136 +1,139 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using ShareMate.IdentityRepo;
-using ShareMate.Models;
-using System.Reflection;
+﻿
 using System;
-using ShareMate.DataTransferObject;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication;
+using System.Data.Common;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Reflection;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using System.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using System.Security.Cryptography;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 
-namespace ShareMate.Controllers
+using Microsoft.IdentityModel.Tokens;
+using ShareMate.Models;
+using ShareMate.DataTransferObject;
+using ShareMate.DbContext;
+
+namespace Tutorials.Api.Controllers
 {
 
     [Route("api/[controller]")]
-        [ApiController]
-        public class AccountController : ControllerBase
-        {
-        private readonly SignInManager<User> _signInManager;
+    [ApiController]
+
+
+    public class AccountController : ControllerBase
+    {
         private readonly UserManager<User> _userManager;
+        private readonly IConfiguration _configuration;
+        private readonly DbContextApplication dbContextApplication;
 
-        public AccountController(SignInManager<User> signInManager, UserManager<User> userManager)
+        public AccountController(UserManager<User> userManager, IConfiguration configuration , DbContextApplication dbContextApplication)
         {
-            _signInManager = signInManager;
             _userManager = userManager;
+            _configuration = configuration;
+            this.dbContextApplication = dbContextApplication;
         }
-
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto model)
+        [HttpPost("Register")]
+        public async Task<IActionResult> Register(RegisterDto userDto)
         {
-            // Validation logic for the LoginDto
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(new ApiResponseDto { Success = false, Message = "Invalid login request" });
-            }
-
-            var result = await _signInManager.PasswordSignInAsync(model.Username, model.Password, isPersistent: false, lockoutOnFailure: false);
-
-            if (result.Succeeded)
-            {
-                // Check if the user has an existing cookie or if the cookie has expired
-                var existingCookie = HttpContext.Request.Cookies[CookieAuthenticationDefaults.AuthenticationScheme];
-
-                if (string.IsNullOrEmpty(existingCookie))
+                if (ModelState.IsValid)
                 {
-                    // User doesn't have a cookie or the cookie has expired, create a new one
-                    var user = await _userManager.FindByNameAsync(model.Username);
 
 
-                    var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Email, user.Email),
-                // Add more claims if needed
-            };
 
-                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var user = new User();
+                    user.Email = userDto.email;
+                    user.Bio = userDto.bio;
+                    user.UserName = userDto.username;
+                    user.Level = userDto.level;
+                    user.Department = userDto.department;
+                    IdentityResult result = await _userManager.CreateAsync(user, userDto.password);
+                    dbContextApplication.SaveChanges();
 
-                    var authProperties = new AuthenticationProperties
+                    User NewUser = dbContextApplication.Users.Where(i => i.UserName == userDto.username).FirstOrDefault();
+                    Student student = new Student();
+                    student.UserId = NewUser.Id;
+                    dbContextApplication.Students.Add(student);
+                    dbContextApplication.SaveChanges();
+                    if (result.Succeeded)
                     {
-                        IsPersistent = true, // You can set this based on your requirements
-                    };
+                        return Ok("Account Add Success");
+                    }
+                    else return BadRequest(result);
 
-                    await HttpContext.SignInAsync(
-                        CookieAuthenticationDefaults.AuthenticationScheme,
-                        new ClaimsPrincipal(claimsIdentity),
-                        authProperties
-                    );
                 }
-                
+                else return BadRequest(ModelState);
 
-                return Ok(new ApiResponseDto { Success = true, Message = "Login successful" });
+
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(new ApiResponseDto { Success = false, Message = "Invalid login attempt" });
+                return BadRequest(ex.Message);
             }
-        }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto model)
+
+
+        }
+        [HttpPost("Login")]
+        public async Task<IActionResult> Login(LoginDto userDto)
         {
-            // Validation logic for the RegisterDto
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-                return BadRequest(new ApiResponseDto { Success = false, Message = "Invalid registration request" });
-            }
-
-            var user = new User { UserName = model.Username, Email = model.Username , Bio = model.Bio , Department = model.Department , Level = model.Level };
-            var result = await _userManager.CreateAsync(user, model.Password);
-
-            if (result.Succeeded)
-            {
-                // Check if this is the user's first registration
-                var isFirstTime = !await _userManager.IsEmailConfirmedAsync(user);
-
-                // If it's the first time, set a cookie
-                if (isFirstTime)
+                var user = await _userManager.FindByNameAsync(userDto.Username);
+                if (user != null)
                 {
-                    var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Email, user.Email),
-                // Add more claims if needed
-            };
-
-                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-                    var authProperties = new AuthenticationProperties
+                    bool found = await _userManager.CheckPasswordAsync(user, userDto.Password);
+                    if (found)
                     {
-                        IsPersistent = true, // You can set this based on your requirements
-                    };
+                        var claims = new[] {
+                        new Claim(ClaimTypes.Name, userDto.Username),
+                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) ,
+                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()) };
 
-                    await HttpContext.SignInAsync(
-                        CookieAuthenticationDefaults.AuthenticationScheme,
-                        new ClaimsPrincipal(claimsIdentity),
-                        authProperties
-                    );
+                        var roles = await _userManager.GetRolesAsync(user);
+                        foreach (var role in roles)
+                        {
+                            Claim claim = new Claim(JwtRegisteredClaimNames.Name, userDto.Username);
+                            claims.Append(claim);
+                        }
+                        SecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:key"]));
+
+
+                        SigningCredentials signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+                        JwtSecurityToken Token = new JwtSecurityToken(
+                            issuer: _configuration["Jwt:Issuer"],
+                            audience: _configuration["Jwt:Audience"],
+                            claims: claims,
+                            expires: DateTime.Now.AddMinutes(120),
+                            signingCredentials: signingCredentials
+                        );
+                        User curUser = dbContextApplication.Users.Where(i => i.UserName == userDto.Username).FirstOrDefault();   
+
+                        return Ok(new
+                        {
+                            token = new JwtSecurityTokenHandler().WriteToken(Token),
+                            expiration = Token.ValidTo,
+                            username = userDto.Username
+
+                        }); ;
+
+
+                    }
                 }
+                return Unauthorized();
 
-                // You may choose to sign in the user after registration
-                // await _signInManager.SignInAsync(user, isPersistent: false);
+            }
+            return Unauthorized();
 
-                return Ok(new ApiResponseDto { Success = true, Message = "Registration successful" });
-            }
-            else
-            {
-                return BadRequest(new ApiResponseDto { Success = false, Message = "Error during registration" });
-            }
         }
-
-
 
     }
 }

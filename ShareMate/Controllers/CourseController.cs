@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using ShareMate.DataTransferObject;
 using ShareMate.DbContext;
 using ShareMate.Models;
+using System.Runtime.CompilerServices;
 
 namespace ShareMate.Controllers
 {
@@ -29,13 +30,13 @@ namespace ShareMate.Controllers
                 Course  course = dbContextApplication.Courses.Where(i => i.Id  == id).FirstOrDefault(); 
                 
                     CourseDto courseDto = new CourseDto();
-                    courseDto.Title = course.Title;
-                    courseDto.Description = course.Description;
-                    courseDto.DepartmentId = course.DepartmentId;
-                    courseDto.LevelId = course.LevelId;
-                    courseDto.CourseCode = course.CourseCode;
-                    courseDto.Id = course.Id;
-                    courseDto.Image = course.Image;     
+                    courseDto.title = course.Title;
+                    courseDto.description = course.Description;
+                    courseDto.departmentId = course.DepartmentId;
+                    courseDto.levelId = course.LevelId;
+                    courseDto.courseCode = course.CourseCode;
+                    courseDto.id = course.Id;
+                    courseDto.image = course.Image;     
 
 
 
@@ -49,21 +50,83 @@ namespace ShareMate.Controllers
         
         }
 
+        [HttpGet("CountMaterialOfCourse")]
+        public async Task<IActionResult> CountMaterialsOfCourse(int id)
+        {
+
+            try
+            {
+
+
+                MaterialCountDto  materialCountDto = new MaterialCountDto();
+                materialCountDto.slides = dbContextApplication.Materials.Where(i => i.CourseId == id && i.Type == 0).Count();
+                materialCountDto.notes = dbContextApplication.Materials.Where(i => i.CourseId == id && i.Type == 1).Count();
+                materialCountDto.practice = dbContextApplication.Materials.Where(i => i.CourseId == id && i.Type == 2).Count();
+                materialCountDto.pastExam = dbContextApplication.Materials.Where(i => i.CourseId == id && i.Type == 3).Count();
+                materialCountDto.links = dbContextApplication.Materials.Where(i => i.CourseId == id && i.Type == 4).Count();
+
+                return Ok(JsonConvert.SerializeObject(materialCountDto));
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+
+        }
+        [HttpGet("GetAll")]
+        public async Task<IActionResult> GetAll()
+        {
+
+            try
+            {
+
+                List<Course> courses = dbContextApplication.Courses.ToList();
+                List<CourseDto> courseDtos = new List<CourseDto>(); 
+                foreach (var course in  courses) {
+                    CourseDto courseDto = new CourseDto();
+                    courseDto.title = course.Title;
+                    courseDto.description = course.Description;
+                    courseDto.departmentId = course.DepartmentId;
+                    courseDto.levelId = course.LevelId;
+                    courseDto.courseCode = course.CourseCode;
+                    courseDto.id = course.Id;
+                    courseDto.image = course.Image;
+                    courseDto.courseCode = course.CourseCode.ToString();    
+                    courseDtos.Add(courseDto);  
+                }
+
+
+                return Ok(JsonConvert.SerializeObject(courseDtos));
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+
+        }
+
         [HttpGet("Search")]
         public async Task<IActionResult> Search (string  title )
         {
             try
-            { 
-                List<Course> courses = dbContextApplication.Courses.Where(i => i.Title.Contains(title)).ToList();
+            {
+                var courses = dbContextApplication.SearchCourses(title);
+
                 List<CourseDto> courseDtos = new List<CourseDto>();
                 foreach (Course course in courses)
                 {
                     CourseDto courseDto = new CourseDto();
-                    courseDto.Title = course.Title;
-                    courseDto.Description = course.Description;
-                    courseDto.DepartmentId = course.DepartmentId;
-                    courseDto.LevelId = course.LevelId;
-                    courseDto.CourseCode = course.CourseCode;
+                    courseDto.title = course.Title;
+                    courseDto.description = course.Description;
+                    courseDto.departmentId = course.DepartmentId;
+                    courseDto.levelId = course.LevelId;
+                    courseDto.courseCode = course.CourseCode;
+                    courseDto.image = course.Image;
+                    courseDto.id = course.Id;
                     courseDtos.Add(courseDto);
 
                 }
@@ -83,20 +146,20 @@ namespace ShareMate.Controllers
 
         [HttpGet("FilterByLevel")]
 
-        public async Task<IActionResult> FilterByLevel (int level)
+        public async  Task<IActionResult>  FilterByLevel (int level)
         {
             List<Course> courses = dbContextApplication.Courses.Where(i => i.LevelId == level).ToList();
             List<CourseDto> courseDtos = new List<CourseDto>();
             foreach (Course course in courses)
             {
                 CourseDto courseDto = new CourseDto();
-                courseDto.Title=course.Title;
-                courseDto.CourseCode=course.CourseCode;
-                courseDto.DepartmentId = course.DepartmentId;
-                courseDto.LevelId = course.LevelId;
-                courseDto.Description=course.Description;   
-                courseDto.Image = course.Image; 
-                courseDto.Id = course.Id;   
+                courseDto.title=course.Title;
+                courseDto.courseCode=course.CourseCode;
+                courseDto.departmentId = course.DepartmentId;
+                courseDto.levelId = course.LevelId;
+                courseDto.description=course.Description;   
+                courseDto.image = course.Image; 
+                courseDto.id = course.Id;   
                 courseDtos.Add(courseDto);  
 
             }
@@ -114,13 +177,13 @@ namespace ShareMate.Controllers
             foreach (Course course in courses)
             {
                 CourseDto courseDto = new CourseDto();
-                courseDto.Title = course.Title;
-                courseDto.CourseCode = course.CourseCode;
-                courseDto.DepartmentId = course.DepartmentId;
-                courseDto.LevelId = course.LevelId;
-                courseDto.Description = course.Description;
-                courseDto.Image = course.Image;
-                courseDto.Id = course.Id;
+                courseDto.title = course.Title;
+                courseDto.courseCode = course.CourseCode;
+                courseDto.departmentId = course.DepartmentId;
+                courseDto.levelId = course.LevelId;
+                courseDto.description = course.Description;
+                courseDto.image = course.Image;
+                courseDto.id = course.Id;
                 courseDtos.Add(courseDto);
 
             }

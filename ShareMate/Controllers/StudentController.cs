@@ -21,26 +21,25 @@ namespace ShareMate.Controllers
         }
 
         [HttpGet("ViewProfile")]
-        public async Task<IActionResult> ViewProfile(string userId)  // view profile details + enroll courses  + upload materials + counts 
+        public async Task<IActionResult> ViewProfile(string username)  // view profile details + enroll courses  + upload materials + counts 
         {
             try
             {
-                userId = DefaultUserId; // will remove later .. 
-                User UserDetails = dbContextApplication.Users.Where(i => i.Id == userId).FirstOrDefault();
-                Student CurStudent = dbContextApplication.Students.Where(i => i.UserId == userId).FirstOrDefault();
+                User UserDetails = dbContextApplication.Users.Where(i => i.UserName == username).FirstOrDefault();
+                Student CurStudent = dbContextApplication.Students.Where(i => i.UserId ==UserDetails.Id).FirstOrDefault();
                 List<Enroll> favouraites = dbContextApplication.Enrolls.Where(i => i.StudentId == CurStudent.Id).ToList();
                 List<CourseDto> coursesDto = new List<CourseDto>();
                 foreach (var favourite in favouraites)
                 {
                     Course course = dbContextApplication.Courses.Where(i => i.Id == favourite.CourseId).FirstOrDefault();
                     CourseDto courseDto = new CourseDto();
-                    courseDto.Title = course.Title;
-                    courseDto.Description = course.Description; 
-                    courseDto.CourseCode = course.CourseCode;   
-                    courseDto.Id = course.Id;   
-                    courseDto.Image = course.Image;    
-                    courseDto.LevelId = course.LevelId; 
-                    courseDto.DepartmentId = course.DepartmentId;
+                    courseDto.title = course.Title;
+                    courseDto.description = course.Description; 
+                    courseDto.courseCode = course.CourseCode;   
+                    courseDto.id = course.Id;   
+                    courseDto.image = course.Image;    
+                    courseDto.levelId = course.LevelId; 
+                    courseDto.departmentId = course.DepartmentId;
                     coursesDto.Add(courseDto);
                 }
                 List<Material> materials = dbContextApplication.Materials.Where(i => i.StudentId == CurStudent.Id).ToList();
@@ -48,25 +47,29 @@ namespace ShareMate.Controllers
                 foreach (var material in materials)
                 {
                     MaterialDto materialDto = new MaterialDto();
-                    materialDto.Description = material.Description;
-                    materialDto.Path = material.Path;   
-                    materialDto.Date = material.Date;
-                    materialDto.StudentId = material.StudentId;
-                    materialDto.CourseId = materialDto.CourseId;
+                    materialDto.description = material.Description;
+                    materialDto.path = material.Path;   
+                    materialDto.date = material.Date;
+                    materialDto.type = material.Type;
+                    materialDto.studentId = material.StudentId;
+                    materialDto.courseId = material.CourseId;
+                    materialDto.id = material.Id;
                     materialsDto.Add(materialDto);  
 
                    
                 }
 
                 StudentProfileDto response = new StudentProfileDto();
-                response.Bio = UserDetails.Bio;
-                response.LeveL = UserDetails.Level;
-                response.UserName = UserDetails.UserName;
-                response.Department = UserDetails.Department;
-                response.Materials = materialsDto;
-                response.Courses = coursesDto;
-                response.FavCount = coursesDto.Count();
-                response.UploadCount = materialsDto.Count();
+                response.bio = UserDetails?.Bio;
+                response.leveL = UserDetails.Level;
+                response.username = UserDetails.UserName;
+                response.department = UserDetails.Department;
+                response.materials = materialsDto;
+                response.courses = coursesDto;
+                response.favCount = coursesDto.Count();
+                response.uploadCount = materialsDto.Count();
+                response.email = UserDetails.Email;
+               
 
                 // Serialize the response object
                 var jsonResponse = JsonConvert.SerializeObject(response);
@@ -79,13 +82,13 @@ namespace ShareMate.Controllers
             
         }
 
-        [HttpPost("ClickOnEnroll")]
-        public async Task<IActionResult> ClickOnEnroll (string userId , int courseId) // click on favouriate icon to add or delete from list 
+        [HttpGet("ClickOnEnroll")]
+        public async Task<IActionResult> ClickOnEnroll (string userName , int courseId) // click on favouriate icon to add or delete from list 
         {
 
             try
             {
-                userId = DefaultUserId; // we will remove it later 
+                string userId = dbContextApplication.Users.Where(i => i.UserName == userName).Select(i => i.Id).FirstOrDefault();
                 Student CurStudnet = dbContextApplication.Students.Where(i => i.UserId == userId).FirstOrDefault();
                 Enroll EnrollCourse = dbContextApplication.Enrolls.Where(i => i.StudentId == CurStudnet.Id && i.CourseId == courseId).FirstOrDefault();
 
@@ -93,7 +96,7 @@ namespace ShareMate.Controllers
                 {
                     dbContextApplication.Enrolls.Remove(EnrollCourse);
                     dbContextApplication.SaveChanges();
-                    return Ok("course deleted from favouraite list");
+                    return Ok(false);
 
                 }
                 else
@@ -103,7 +106,7 @@ namespace ShareMate.Controllers
                     EnrollCourse.StudentId = CurStudnet.Id;
                     dbContextApplication.Enrolls.Add(EnrollCourse);
                     dbContextApplication.SaveChanges();
-                    return Ok("course added to favouriate list ");
+                    return Ok(true);
                 }
 
 
@@ -114,6 +117,42 @@ namespace ShareMate.Controllers
             }
                     
             
+
+
+        }
+
+        [HttpGet("IsFavourite")]
+        public async Task<IActionResult> IsFavourite(string userName, int courseId) // click on favouriate icon to add or delete from list 
+        {
+
+            try
+            {
+                string userId = dbContextApplication.Users.Where(i => i.UserName == userName).Select(i => i.Id).FirstOrDefault();
+                Student CurStudnet = dbContextApplication.Students.Where(i => i.UserId == userId).FirstOrDefault();
+                Enroll EnrollCourse = dbContextApplication.Enrolls.Where(i => i.StudentId == CurStudnet.Id && i.CourseId == courseId).FirstOrDefault();
+
+                if (EnrollCourse is not null)
+                {
+                    
+                    return Ok(true);
+
+                }
+                else
+                {
+                   
+                    return Ok(false);
+                }
+
+
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+
+            }
+
+
 
 
         }

@@ -7,19 +7,20 @@ namespace ShareMate.DataTransferObject
 
     public class StudentProfileDto 
     {
-        public int Id { get; set; }
-        public string UserName { get; set; }    
+        public string username { get; set; }    
 
-        public int LeveL {get; set; }   
-        public string? Bio { get; set; }    
-        public int Department { get; set; }     
+        public int leveL {get; set; }   
+        public string? bio { get; set; }    
+        public int department { get; set; }     
 
-        public List<MaterialDto> Materials { get; set; }
-        public List<CourseDto> Courses { get; set; }  
+        public List<MaterialDto> materials { get; set; }
+        public List<CourseDto> courses { get; set; }  
 
-        public int FavCount { get; set; }
+        public int favCount { get; set; }
 
-        public int  UploadCount { get; set; }   
+        public int  uploadCount { get; set; }   
+
+        public string email { get; set; }   
 
     }
 }

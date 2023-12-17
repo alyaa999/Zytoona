@@ -9,7 +9,7 @@ namespace ShareMate.Models
         Notes = 1, 
         Practice = 2,
         PastExam = 3,
-        Video = 4,  
+        Link = 4,  
     }
     public class Material
     {

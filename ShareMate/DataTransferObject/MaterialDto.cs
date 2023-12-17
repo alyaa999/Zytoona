@@ -2,12 +2,12 @@
 {
     public class MaterialDto
     {
-        public int Id { get; set; }
-        public int Type { get; set; }
-        public DateTime Date { get; set; }
-        public string Path { get; set; }
-        public string Description { get; set; }
-        public int CourseId { get; set; }
-        public int StudentId { get; set; }
+        public int id { get; set; }
+        public int type { get; set; }
+        public DateTime date { get; set; }
+        public string path { get; set; }
+        public string description { get; set; }
+        public int courseId { get; set; }
+        public int studentId { get; set; }
     }
 }
