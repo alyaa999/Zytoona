@@ -17,20 +17,21 @@ namespace ShareMate.Controllers
             this.dbContext = dbContextApplication;
         }
         [HttpPost("Create")]
-        public async Task<IActionResult> Create(string userId , int courseId , int Type, string description , string path )
+        public async Task<IActionResult> Create(string userId , string  course , int type, string title , string url )
         {
 
             try
             {
                 userId = DefaultUserId;
+                int  courseId = dbContext.Courses.Where(i => i.Title ==course).Select(i=>i.Id).FirstOrDefault();  
                 Student CurrStudent = dbContext.Students.FirstOrDefault(i => i.UserId == userId);
                 Material material = new Material();
-                material.Description = description;
-                material.Path = path;
+                material.Description = title;
+                material.Path = url;
                 material.Date = DateTime.Now;
                 material.CourseId = courseId;
                 material.StudentId = CurrStudent.Id;
-                material.Type = Type;
+                material.Type = type;
 
                 var response  = dbContext.Materials.Add(material);
                 dbContext.SaveChanges();
