@@ -40,6 +40,7 @@ namespace ShareMate.Controllers
                     courseDto.image = course.Image;    
                     courseDto.levelId = course.LevelId; 
                     courseDto.departmentId = course.DepartmentId;
+                    
                     coursesDto.Add(courseDto);
                 }
                 List<Material> materials = dbContextApplication.Materials.Where(i => i.StudentId == CurStudent.Id).ToList();
